@@ -41,19 +41,31 @@ public class EdmngRepository {
 		
 		//物件
 		if(ed.getProperty().length() > 0) {
-			where.append("where d01.bukken_name like ? ");
+			if(where.length() == 0) {
+				where.append("where d01.bukken_name like ? ");
+			}else {
+				where.append("and d01.bukken_name like ? ");
+			}
 			param.add("%" + ed.getProperty() + "%");
 		}
 		
 		//担当
 		if(ed.getTanto().length() > 0) {
-			where.append("where d01.tanto like ? ");
+			if(where.length() == 0) {
+				where.append("where d01.tanto like ? ");
+			}else {
+				where.append("and d01.tanto like ? ");
+			}
 			param.add("%" + ed.getTanto() + "%");
 		}
 		
 		//部門
 		if(ed.getDept().length() > 0) {
-			where.append("where d01.bumon like ? ");
+			if(where.length() == 0) {
+				where.append("where d01.bumon like ? ");
+			}else {
+				where.append("and d01.bumon like ? ");
+			}
 			param.add("%" + ed.getDept() + "%");
 		}
 		
