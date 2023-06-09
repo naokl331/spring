@@ -32,9 +32,9 @@ public class EdmngController {
 	//			  得意先リストの表示(挿入)
 	//------------------------------------------------
 	@PostMapping("/getList4Edmng")
-	public String getList(@ModelAttribute("cd") CustomerData cd , Model model) {
+	public String getList(@ModelAttribute("ed") EdmngData ed , Model model) {
 
-		er.getEdmngList(cd);
+		er.getEdmngList(ed);
 		
 		return "edmngTable";
 	}

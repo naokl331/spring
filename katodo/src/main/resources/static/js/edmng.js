@@ -34,8 +34,8 @@ function searchEdmng(){
 				totalPages: rtn,
 				visiblePages: 10,
 				onPageClick: function(event,page){
-					
-					getList(data,page);	//リスト取得用functionの呼び出し				
+					$("#page").val(page);
+					getList();	//リスト取得用functionの呼び出し				
 				}
 			});
 		}
@@ -44,14 +44,12 @@ function searchEdmng(){
 }
 
 //リスト取得用function
- function getList(data,page){
-	 
-	 let listdata = data + "&page=" + page;
-	 //alert(listdata);
-	 
+ function getList(){
+	let data = $("#searchForm").serialize();
+
 	 $.post(
 		 "getList4Edmng",
-		 listdata,
+		 data,
 		 function(rtn){
 			 //alert(rtn);
 			 $("#edmng").html(rtn);
