@@ -3,6 +3,7 @@
 function searchCustomer(){
 	
 	let data = $("#searchForm").serialize(); //クエリ文字が保存
+	//alert(data);
 	
 	$.post(
 		"getPages4Customer",
@@ -33,7 +34,6 @@ function searchCustomer(){
  function getList(data,page){
 	 
 	 let listdata = data + "&page=" + page;
-	 //alert(listdata);
 	 
 	 $.post(
 		 "getList4Customer",

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<h3 class="text-center">得意先参照</h3>
+	<div class="container">
+		
+		<div class="row justify-content-center">
+			<div class="col-10">
+				<label>物件</label>
+				<input type="text" id="search_bukken" value="">
+				<label>ﾌﾘｶﾞﾅ</label>
+				<input type="text" id="search_hurigana" value="">
+				<button type="button" onclick="searchBukkenRef2()">検索</button>
+				<button type="button" onclick="cancelRef()">キャンセル</button>
+			</div>
+		</div>
+		
+		<!-- ページネーション表示用 -->
+		<div class="row justify-content-center">
+			<nav aria-label="Page navigation" class="col-6">
+				<ul class="pagination" id="pagination"></ul>
+			</nav>
+		</div>
+		
+		<!-- リスト表示 -->
+		<div class="row justify-content-center">
+			<div class="col-6" id="bukkenRef"></div>
+		</div>
+	</div>
+</body>
+</html>

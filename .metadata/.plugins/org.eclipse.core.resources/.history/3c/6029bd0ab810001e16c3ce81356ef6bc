@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" href="css/modaal.css">
+<script src="js/jquery-3.7.0.min.js"></script>
+<script src="js/jquery.twbsPagination.min.js"></script>
+<script src="js/modaal.js"></script>
+<script src="js/edetail.js"></script>
+</head>
+<body>
+	<div th:replace="~{header2.html}"></div>
+	
+	<div class="container-fluid justify-content-center">
+		
+		<h3 class="text-center my-4">Temporary Table Editing<span>一時テーブル編集</span></h3>
+		
+		<div class="row">
+			<div class="col">
+				
+				<table class="table table-sm table-bordered table-striped table-dark border-secondary">
+					
+					<!--1段目-->
+					<tr>
+						<th>管理No
+							<input type="hidden" id="kanri_no" th:value="${edd.kanri_no}">
+						</th>
+						<td class="text-center" th:text="${edd.kanri_no}"></td>
+						<th>Rec_no
+							<input type="hidden" id="rec_no" th:value="${edd.rec_no}">
+						</th>
+						<td class="text-center" th:text="${edd.rec_no}"></td>
+						<th colspan="9"></th>
+					</tr>
+					
+					<!--2段目-->
+					<tr>
+						<th colspan="2">工事１</th>
+						<th colspan="2">工事２</th>
+						<th colspan="2">工事３</th>
+						<th colspan="1">数量</th>
+						<th colspan="2">単位</th>
+						<th colspan="1">単価</th>
+						<th colspan="1">金額</th>
+						<th colspan="1">備考</th>
+						<th colspan="1">taxflg</th>
+					</tr>
+					
+					<!--3段目-->
+					<tr>
+						<td><input type="text" name="koji1" id="koji1" value=""></td>
+						<td><a href="dispKoji1" class="mdl1"><button type="button">▼</button></td>
+						
+						<td><input type="text" name="koji2" id="koji2" value=""></td>
+						<td><a href="dispKoji2" class="mdl2"><button type="button">▼</button></td>
+						
+						<td><input type="text" name="koji13" id="koji3" value=""></td>
+						<td><a href="dispKoji3" class="mdl3"><button type="button">▼</button></td>
+						
+						<td><input type="number" name="suryo" id="suryo" value="" onchange="keisan()"></td>
+						
+						<td><input type="text" id="tani" value=""></td>
+						<td><a href="dispTani" class="mdl4"><button type="button">▼</button></td>
+						
+						<td><input type="number" name="tanka" id="tanka" value="" onchange="keisan()"></td>
+						
+						<td><input type="number" name="kingaku" id="kingaku" value=""></td>
+						
+						<td><input type="text" name="biko" id="biko" value=""></td>
+						
+						<td>
+							<select name="tax_flg" size="1">
+								<option>計算対象</option>
+								<option>計算対象外</option>
+							</select>
+						</td>
+					</tr>
+					
+					<!--4段目-->
+					<tr>
+						<td class="text-center" colspan="13">
+							<button type="submit" onclick="addRec()" class="rounded-2 px-3 py-1 text-white" style="border-width:1px; background-color:#0075c2">登録</button>
+							<button type="button" onclick="recEditCancel()" class="rounded-2 px-3 py-1 text-white" style="border-width:1px; background-color:tomato">キャンセル</button>
+						</td>
+					</tr>
+					
+				</table>
+				
+			</div>
+		</div>
+	</div>
+	
+</body>
+</html>

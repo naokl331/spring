@@ -37,4 +37,13 @@ public class MenuController {
 		return "redirect:/";
 	}
 	
+	
+	//------------------------------------------------
+	//			  		遊び場
+	//------------------------------------------------
+	@GetMapping("/ground")
+	public String ground() {
+		
+		return "ground";
+	}
 }

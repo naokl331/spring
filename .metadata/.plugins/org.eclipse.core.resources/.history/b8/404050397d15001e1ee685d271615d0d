@@ -1,0 +1,352 @@
+package com.example.katodo.controller;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PostMapping;
+
+import com.example.katodo.data.EDdetailsData;
+import com.example.katodo.data.EdmngData;
+import com.example.katodo.repositry.EDdetailsRepository;
+import com.example.katodo.repositry.EdmngRepository;
+import com.example.katodo.service.EdmngService;
+
+import jakarta.servlet.http.HttpSession;
+
+@Controller
+public class EdmngController {
+
+	
+	@Autowired
+	EdmngRepository er;
+	
+	@Autowired
+	EdmngService es;
+	
+	@Autowired
+	EDdetailsRepository edr;
+	
+	@Autowired
+	HttpSession session;
+	
+	//------------------------------------------------
+	//			  受注管理画面表示
+	//------------------------------------------------
+	@GetMapping("/edmng")
+	public String index(@ModelAttribute("ed") EdmngData ed, Model model) {
+		ed.setSearchFlg("0");
+		ed.setStartPage(1);
+		return "edmng";
+	}
+	
+	
+	//------------------------------------------------
+	//		受注管理 新規/編集 登録->キャンセル
+	//------------------------------------------------
+	@GetMapping("/back2Edmng")
+	public String back2Edmng(Model model) {
+		
+		model.addAttribute("ed",session.getAttribute("edmngData"));
+		
+		return "edmng";
+	}
+	
+	
+	//------------------------------------------------
+	//			  受注管理リストの表示(挿入)
+	//------------------------------------------------
+	@PostMapping("/getList4Edmng")
+	public String getList(@ModelAttribute("ed") EdmngData ed , Model model) {
+
+		//画面遷移前にDataクラスをsessionに記憶しておく
+		session.setAttribute("edmngData",ed);
+		
+		er.getEdmngList(ed);
+		
+		return "edmngTable";
+	}
+	
+	
+	//------------------------------------------------
+	//			  受注管理新規作成押下
+	//------------------------------------------------
+	@PostMapping("/edmngCreateNew")
+	public String createNew(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		//画面遷移前にDataクラスをsessionに記憶しておく
+		session.setAttribute("edmngData",ed);
+		
+		ed.setTitle("見積・納品データ新規作成");
+		ed.setENtitle("Create new (Edata / Ddata)");
+		ed.setAction("edmngInsert");
+		ed.setData_flg(true);
+		
+		return "createNewEdmng";
+	}
+	
+	
+	//------------------------------------------------
+	//	得意先参照画面呼び出し(customerList検索画面)
+	//------------------------------------------------
+	@GetMapping("/customerref")
+	public String dispCustomerRef(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		return "customerRef";
+	}
+	
+	
+	//------------------------------------------------
+	//	物件参照画面呼び出し(BukkenList検索画面)
+	//------------------------------------------------
+	@GetMapping("/bukkenref")
+	public String dispBukkenRef(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		return "bukkenRef";
+	}
+	
+	
+	//------------------------------------------------
+	//			モーダルリスト表示(得意先)
+	//------------------------------------------------
+	@PostMapping("/getList4Ref")
+	public String getList4Ref(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		es.getList(ed);
+		
+		return "selectCustomerTable";
+	}
+	
+	
+	//------------------------------------------------
+	//			モーダルリスト表示(物件)
+	//------------------------------------------------
+	@PostMapping("/getList4BukkenRef")
+	public String getList4BukkenRef(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		es.getBukkenList(ed);
+		
+		return "selectBukkenTable";
+	}
+	
+	
+	//------------------------------------------------
+	//		受注管理新規登録(DB)->一覧
+	//------------------------------------------------
+	@PostMapping("/edmngInsert")
+	public String edmngInsert(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		//受注管理新規登録画面でフォームから取得したデータをDBにinsert
+		er.edmngInsert(ed);
+		
+		return "redirect:back2Edmng";
+	}
+	
+	//------------------------------------------------
+	//			受注管理編集登録ボタン押下
+	//------------------------------------------------
+	@GetMapping("/edEdit")
+	public String dispEdEdit(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		er.getEdmngData(ed);
+		ed.setTitle("見積・納品データ編集");
+		ed.setENtitle("Edit (Edata / Ddata)");
+		ed.setAction("edmngUpdate");
+		ed.setDisabled(1);
+		ed.setData_flg(false);
+		
+		//System.out.println("受注管理編集登録ボタン押下" + model.toString());
+		
+		return "createNewEdmng";
+	}
+	
+	
+	//------------------------------------------------
+	//			受注管理編集登録(DB)->一覧
+	//------------------------------------------------
+	@PostMapping("/edmngUpdate")
+	public String edmngUpdate(@ModelAttribute("ed") EdmngData ed , Model model) {
+		
+		System.out.println("受注管理編集登録(DB)->一覧" + model.toString());
+				
+		//受注管理編集登録画面でフォームから取得したデータをDBにupdate
+		er.edmngUpdate(ed);
+		
+		return "redirect:back2Edmng";
+	}
+	
+	
+	//------------------------------------------------
+	//			見積書新規作成画面の表示
+	//------------------------------------------------
+	@GetMapping("/makeEdetail")
+	public String dispMakeEdetail(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		
+		edr.getEdBaseData(edd);
+		
+		return "edetail";
+	}
+	
+	
+	//------------------------------------------------
+	//			納品書新規作成画面の表示
+	//------------------------------------------------
+	@GetMapping("/makeDdetail")
+	public String dispMakeDdetail(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		
+		edd.setTmpTable_flg(false);
+		edr.getEdBaseData(edd);
+		edr.getRecordFromD02(edd);
+		
+		edr.copy2t02(edd);
+		
+		return "ddetail";
+	}
+	
+	
+	//------------------------------------------------
+	//			見積書編集作成画面の表示
+	//------------------------------------------------
+	@GetMapping("/editEdetail")
+	public String dispEditEdetail(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		
+		//d02の該当データをt02へコピー(insert)
+		
+		edd.setTmpTable_flg(false);
+		edr.getEdBaseData(edd);
+		edr.getRecordFromD02(edd);
+		
+		edr.copy2t02(edd);
+		
+		return "edetail";
+	}
+
+	
+	//------------------------------------------------
+	//	見積書一次テーブルキャンセルボタン押下
+	//------------------------------------------------
+	@GetMapping("/back2Edetail")
+	public String back2Edetail(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		edd.setTmpTable_flg(false);
+		edr.getEdBaseData(edd);
+		
+		return "edetail";
+	}
+	
+	//------------------------------------------------
+	//			見積書一次テーブル編集
+	//------------------------------------------------
+	@GetMapping("/editRecord")
+	public String dispEditRecord(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		
+		edr.getRecord(edd);
+		//System.out.println(model.toString());
+		return "editRecord";
+	}
+	
+	
+	//------------------------------------------------
+	//			一時テーブル１列削除
+	//------------------------------------------------
+	@GetMapping("/deleteRecord")
+	public String deleteRecord(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		
+		edd.setTmpTable_flg(false);
+		edr.deleteRecord(edd);
+		edr.getEdBaseData(edd);
+		System.out.println("１列削除 = " + model.toString());
+		
+		return "edetail";
+	}
+	
+	
+	//------------------------------------------------
+	//			工事１モーダル画面表示用
+	//------------------------------------------------
+	@GetMapping("/dispKoji1")
+	public String dispKoji1(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		model.addAttribute("Koji1list",edr.getKoji1List());
+		return "koji1Table";
+	}
+	
+	
+	//------------------------------------------------
+	//			工事2モーダル画面表示用
+	//------------------------------------------------
+	@GetMapping("/dispKoji2")
+	public String dispKoji2(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		model.addAttribute("Koji2list",edr.getKoji2List());
+		return "koji2Table";
+	}
+	
+	
+	//------------------------------------------------
+	//			工事3モーダル画面表示用
+	//------------------------------------------------
+	@GetMapping("/dispKoji3")
+	public String dispKoji3(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		model.addAttribute("Koji3list",edr.getKoji3List());
+		return "koji3Table";
+	}
+	
+	
+	//------------------------------------------------
+	//			単位モーダル画面表示用
+	//------------------------------------------------
+	@GetMapping("/dispTani")
+	public String dispTani(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		model.addAttribute("Tanilist",edr.getTaniList());
+		return "taniTable";
+	}
+		
+	
+	
+	//------------------------------------------------
+	//				一次テーブル更新
+	//------------------------------------------------
+	@PostMapping("/updRec")
+	public String updateRecord(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		//System.out.println("updRec" + model.toString());
+		//入力値を一時テーブルの該当行に反映
+		edr.updRec(edd);
+		
+		//一時テーブルを初期化させない
+		edd.setTmpTable_flg(false);
+		edr.getEdBaseData(edd);
+		
+		return "edetail";
+	}
+	
+	
+	//------------------------------------------------
+	//				見積書1行追加
+	//------------------------------------------------
+	@PostMapping("/addRec")
+	public String addRecord(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		//System.out.println("addRec = " + model.toString());
+		
+		//一時テーブル行追加
+		edr.addRec(edd);
+
+		//一時テーブルを初期化させない
+		edd.setTmpTable_flg(false);
+		edr.getEdBaseData(edd);
+
+		return "edetail";
+	}
+	
+	
+	//------------------------------------------------
+	//				見積書登録
+	//------------------------------------------------
+	@PostMapping("/eRegist")
+	public String eRegist(@ModelAttribute("edd") EDdetailsData edd , Model model) {
+		//見積書の登録(t02_edetails -> d02_edetails) + d01の該当項目を更新
+		edr.eRegist(edd);
+
+		return "redirect:edEdit?kanri_no=" + edd.getKanri_no();
+	}
+
+	
+}

@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<link rel="stylesheet" href="css/test.css">
+<body>
+<!--	<div th:replace="~{header.html}"></div>-->
+
+	<div class='box'>
+	  <div class='wave -one'></div>
+	  <div class='wave -two'></div>
+	  <div class='wave -three'></div>
+	  <div class='title'>Katodo System</div>
+	</div>
+	
+</body>
+</html>

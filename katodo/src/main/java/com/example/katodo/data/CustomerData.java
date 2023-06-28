@@ -21,4 +21,5 @@ public class CustomerData {
 	//画面用
 	List<Map<String,Object>> list;
 	private int page;
+	
 }

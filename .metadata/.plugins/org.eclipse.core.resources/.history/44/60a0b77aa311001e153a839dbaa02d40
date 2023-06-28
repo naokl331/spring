@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+<link rel="stylesheet" href="css/modaal.css">
+<link rel="stylesheet" href="css/createNewEdmng.css">
+<script src="js/jquery-3.7.0.min.js"></script>
+<script src="js/jquery.twbsPagination.min.js"></script>
+<script src="js/modaal.js"></script>
+<script src="js/edCreateNew.js"></script>
+</head>
+<body>
+	<div th:replace="~{header2.html}"></div>
+	
+	<h3 class="text-center my-4"><div th:text="${ed.ENtitle}"></div><span th:text="${ed.title}"></span></h3>
+	
+	<div class="container">
+		
+		<form id="EdmngForm" th:action="${ed.action}" method="post" onsubmit="return putButton()">
+			<div class="row justify-content-end">
+				<div class="col-6 text-end">
+					<label>年度</label>
+					<input class="w-25 nendo" type="text" name="nendo" id="nendo" th:value="${session.year}" readonly>
+					<label>請求書作成</label>
+					<select name="seikyu_flg" id="seikyu_flg">
+						<option value="1" th:text="請求対象"></option>
+						<option value="0" th:selected="${ed.seikyu_flg == 0}" th:text="請求なし"></option>
+					</select>
+				</div>
+			</div>
+			
+			<div class="row justify-content-center">
+				
+				<div class="col">
+				
+					<table class="table table-borderd table-striped table-dark border-light table-sm">
+						<!-- 1列目 -->
+						<tr>
+							<th class="text-center" colspan="2">共通</th>
+							<th class="text-center" colspan="2">見積書</th>
+							<th class="text-center" colspan="2">納品書</th>
+						</tr>
+						<!-- 2列目 -->
+						<tr>
+							<th>管理No</th>
+							<td><input type="text" name="kanri_no" id="kanri_no" th:value="${ed.kanri_no}" readonly></td>
+							<th>見積書作成フラグ</th>
+							<td>
+								<span th:if="${ed.e_flg == 0}">
+									<label class="notCreated">未作成</label>
+									<button type="button" th:disabled="${ed.disabled == 0}" class="btn btn-danger btn-sm"><a th:href="|makeEdetail?kanri_no=${ed.kanri_no}|">見積書作成</a></button>
+								</span>
+								
+								<span th:if="${ed.e_flg == 1}">
+									<label class="Created">作成済</label>
+									<a th:href="|makeEdetail?kanri_no=${ed.kanri_no}|"><button type="button" class="btn btn-success btn-sm">見積書編集</button></a>
+								</span>
+							</td>
+							<th>納品書作成フラグ</th>
+							<td>
+								<span th:if="${ed.d_flg == 0}">
+									<label class="notCreated">未作成</label>
+									<button type="button" th:disabled="${ed.disabled == 0}" class="btn btn-success btn-sm"><a th:href="|makeEdetail?kanri_no=${ed.kanri_no}|">納品書作成</a></button>
+								</span>
+								
+								<span th:if="${ed.d_flg == 1}">
+									<label class="Created">作成済</label>
+									<a th:href="|makeDdetail?kanri_no=${ed.kanri_no}|"><button type="button" class="btn btn-success btn-sm">納品書編集</button></a>
+								</span>
+							</td>
+						</tr>
+						
+						<!-- 3列目 -->
+						<tr>
+							<th>得意先</th>
+							<td>
+								<input type="text" name="tokuisaki_name" id="tokuisaki_name" th:value="${ed.tokuisaki_name}" readonly>
+								<input type="hidden" name="tokuisaki_no" id="tokuisaki_no" th:value="${ed.tokuisaki_no}"> 
+								<a href="customerref" class="mdl1"><button class="btn btn-sm">参照</button></a>	
+							</td>
+							<th>見積書作成日</th>
+							<td><input type="date" name="e_date" id="e_date" th:value="${ed.e_date}"></td>
+							<th>納品書作成日</th>
+							<td><input type="date" name="d_date" id="d_date" th:value="${ed.d_date}"></td>
+						</tr>
+						
+						<!-- 4列目 -->
+						<tr>
+							<th>物件</th>
+							<td>
+								<input type="text" name="property" id="property" th:value="${ed.property}">
+								<input type="hidden" name="bukken_no" id="bukken_no" th:value="${ed.bukken_no}"> 
+								<a href="bukkenref" class="mdl2"><button class="btn btn-sm">参照</button></a>	
+							</td>	
+							<th>見積書合計金額</th>
+							<td><input type="text" name="e_gokei" id="e_gokei" th:value="${ed.e_gokei}" readonly></td>
+							<th>納品書合計金額</th>
+							<td><input type="text" name="d_gokei" id="d_gokei" th:value="${ed.d_gokei}" readonly></td>
+						</tr>
+						
+						<!-- 5列目 -->
+						<tr>
+							<th>担当</th>
+							<td><input type="text" name="tanto" id="tanto"  th:value="${ed.tanto}"></td>
+							<th>見積書消費税額</th>
+							<td><input type="text" name="e_tax" id="e_tax"  th:value="${ed.e_tax}" readonly></td>
+							<th>納品書消費税額</th>
+							<td><input type="text" name="d_tax" id="d_tax" th:value="${ed.d_tax}" readonly></td>
+						</tr>
+						
+						<!-- 6列目 -->
+						<tr>
+							<th>部門</th>
+							<td><input type="text" name="dept" id="dept" th:value="${ed.dept}"></td>
+							<th>見積書税込金額</th>
+							<td><input type="text" name="e_total" id="e_total" th:value="${ed.e_total}" readonly></td>
+							<th>納品書税込金額</th>
+							<td><input type="text" name="d_total" id="d_total" th:value="${ed.d_total}" readonly></td>
+						</tr>
+						
+						<!-- 7列目 -->
+						<tr>
+							<th>工事完了日</th>
+							<td><input type="date" name="koji_kanryo_date" id="koji_kanryo_date" th:value="${ed.koji_kanryo_date}"></td>
+							<th>見積書摘要</th>
+							<td><input type="text" name="e_tekiyo" id="e_tekiyo" th:value="${ed.e_tekiyo}"></td>
+							<th>納品書摘要</th>
+							<td><input type="text" name="d_tekiyo" id="d_tekiyo" th:value="${ed.d_tekiyo}"></td>
+						</tr>
+						
+						<!-- 8列目 -->
+						<tr>
+							<th>メモ</th>
+							<td><input type="text" name="memo" id="memo" th:value="${ed.memo}"></td>
+							<th colspan="2"></th>
+							<th>発注番号</th>
+							<td><input type="text" name="hachu_no" id="hachu_no" th:value="${ed.hachu_no}"></td>
+						</tr>
+						
+						<!-- 9列目 -->
+						<tr>
+							<th class="text-center" colspan="6">
+								<button type="submit" class="rounded-2 px-3 py-1 text-white" style="border-width:1px; background-color:#0075c2">登録</button>
+								<button type="button" class="rounded-2 px-3 py-1 text-white" style="border-width:1px; background-color:tomato" onclick="cancel()">キャンセル</button>
+							</th>
+						</tr>
+					</table>
+				</div>
+			</div>
+		</form>
+	</div>
+</body>
+</html>

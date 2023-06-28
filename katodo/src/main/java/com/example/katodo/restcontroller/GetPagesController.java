@@ -36,8 +36,28 @@ public class GetPagesController {
 	@PostMapping("/getPages4Edmng")
 	public int forEdmngList(@ModelAttribute("ed") EdmngData ed, Model model) {
 		
-		System.out.println(model.toString());
-		
 		return er.getPageCount(ed);
 	}
+	
+	
+	//-------------------------------------
+	//	モーダル得意先リストページ数返却
+	//-------------------------------------
+	@PostMapping("/getPages4CustomerRef")
+	public int forCustomerRefList(@ModelAttribute("ed") EdmngData ed, Model model) {
+		
+		return er.getRefPageCount(ed);
+	}
+	
+	
+	//-------------------------------------
+	//	モーダル物件リストページ数返却
+	//-------------------------------------
+	@PostMapping("/getPages4BukkenRef")
+	public int forBukkenRefList(@ModelAttribute("ed") EdmngData ed, Model model) {
+		
+		return er.getBukkenPageCount(ed);
+	}
+	
+	
 }

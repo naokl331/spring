@@ -41,5 +41,6 @@ public class UpdateCustomerController {
 		
 		return "得意先の新規登録が完了しました。";
 	}
+
 	
 }

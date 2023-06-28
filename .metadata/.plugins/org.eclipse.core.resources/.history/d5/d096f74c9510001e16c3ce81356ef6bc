@@ -1,0 +1,64 @@
+.header{
+  background:#000428;
+  -webkit-animation:colour 10s linear infinite;
+  
+}
+@-webkit-keyframes colour{
+  0%{
+    background:#000428
+  }
+
+  50%{
+    background:#004e92
+  }
+  
+  100%{
+    background:#000428
+  }
+
+}
+
+.nendo{
+	width: 48px;
+	height: 20px;
+}
+
+h1:first-letter {
+  color        : orangered;
+  text-shadow   : 2px 2px 1px #ffffff;
+}
+
+
+h1{
+  font-family:Times;
+  margin-top:100px;
+  color:#fff;
+  font-size:50px;
+  text-align:center;
+  text-transform:uppercase;
+}
+
+
+h3 {
+  font-family:Times;
+  font-size: 3rem;
+  position: relative;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+h3 span {
+  font-size: 1.7rem;
+  display: block;
+}
+
+h3:before {
+  position: absolute;
+  bottom: -10px;
+  left: calc(50% - 30px);
+  width: 60px;
+  height: 5px;
+  content: '';
+  border-radius: 3px;
+  background: #fa4141;
+}

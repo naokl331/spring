@@ -1,45 +1,42 @@
 
-
-
 //読み込み時に自動起動
 $(function(){
-	
 	let searchFlg = $("#searchFlg").val();
-	//alert(searchFlg);
-	
-	if(searchFlg == 1) searchEdmng();
-	
+	if(searchFlg == 1)searchEdmng($("#startPage").val());
 });
 
 
-function searchEdmng(){
+function searchEdmng(flg){
 	
-	$("#searchFlg").val(1);
+	$("#searchFlg").val("1");
+	$("#startPage").val(flg);
+	
 	let data = $("#searchForm").serialize();
 	
 	$.post(
 		"getPages4Edmng",
 		data,
 		function(rtn){
-			alert(rtn);
-			
+
 			if(rtn == 0){
 				$("#pagination").twbsPagination('destroy');
-				$("#customerList").text("該当するデータはありません");
+				$("#edmngTable").text("該当するデータはありません");
 				return;
 			}
 			//ページネーション表示
-			$("#pagination").twbsPagination('destroy');	//前のページネーション情報を消去する
+			$("#pagination").twbsPagination('destroy');
 			$("#pagination").twbsPagination({
+				startPage:parseInt($("#startPage").val()),
 				totalPages: rtn,
 				visiblePages: 10,
 				onPageClick: function(event,page){
 					$("#page").val(page);
-					getList();	//リスト取得用functionの呼び出し				
+					$("#startPage").val(page);
+					getList();
 				}
 			});
 		}
-	)
+	);
 	
 }
 
@@ -51,9 +48,7 @@ function searchEdmng(){
 		 "getList4Edmng",
 		 data,
 		 function(rtn){
-			 //alert(rtn);
-			 $("#edmng").html(rtn);
-
+			 $("#edmngTable").html(rtn);
 		 }
 	 );
  }

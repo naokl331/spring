@@ -1,0 +1,729 @@
+package com.example.katodo.repositry;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+
+import com.example.katodo.data.EdmngData;
+
+@Repository
+public class EdmngRepository {
+
+	@Autowired
+	JdbcTemplate jt;
+	
+	//--------------------------------------------
+	//	受注管理ページネーション用ページ数
+	//--------------------------------------------
+	public int getPageCount(EdmngData ed) {
+		//SQLの動的生成と、パラメータのセット
+		StringBuilder sql = new StringBuilder();
+		StringBuilder where = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		//基本的なSQL
+		sql.append("select count(*) cnt ");
+		sql.append("from ");
+		sql.append("d01_eddb as d01 ");	//d01_eddbをd01と命名し
+		sql.append("inner join m02_tokuisaki as m02 "); //d01とm02と命名したm02_tokuisakiを内部結合したく
+		sql.append("on d01.tokuisaki_no = m02.tokuisaki_no "); //それぞれのtokuisaki_noで結合する
+		
+		//得意先
+		if(ed.getTokuisaki_name().length() > 0) {
+			where.append("where m02.tokuisaki_name like ? ");
+			param.add("%" + ed.getTokuisaki_name() + "%");
+		}
+		
+		//物件
+		if(ed.getProperty().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where d01.bukken_name like ? ");
+			}else {
+				where.append("and d01.bukken_name like ? ");
+			}
+			param.add("%" + ed.getProperty() + "%");
+		}
+		
+		//担当
+		if(ed.getTanto().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where d01.tanto like ? ");
+			}else {
+				where.append("and d01.tanto like ? ");
+			}
+			param.add("%" + ed.getTanto() + "%");
+		}
+		
+		//部門
+		if(ed.getDept().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where d01.bumon like ? ");
+			}else {
+				where.append("and d01.bumon like ? ");
+			}
+			param.add("%" + ed.getDept() + "%");
+		}
+		
+		//工事完了日(const_bgn)
+		if(ed.getConst_bgn().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.koji_kanryo_date >= ? ");	//フォームに入力されたdateは2023-06-08みたいな文字列として取得される で文字列ごとで手前からどちらの数字文字列(文字コード)が大きいかを見ていき判定している
+			param.add(ed.getConst_bgn());
+		}
+		
+		//工事完了日(const_end)
+		if(ed.getConst_end().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.koji_kanryo_date <= ? ");	
+			param.add(ed.getConst_end());
+		}
+		
+		//見積書作成日(est_bgn)
+		if(ed.getEst_bgn().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.e_date >= ? ");	
+			param.add(ed.getEst_bgn());
+		}
+		
+		//見積書作成日(est_end)
+		if(ed.getEst_end().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.e_date <= ? ");	
+			param.add(ed.getEst_end());
+		}
+
+		//納品書作成日(del_bgn)
+		if(ed.getDel_bgn().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.d_date >= ? ");	
+			param.add(ed.getDel_bgn());
+		}
+		
+		//納品書作成日(del_end)
+		if(ed.getDel_end().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.d_date <= ? ");	
+			param.add(ed.getDel_end());
+		}
+		
+		//発注番号(po_num1)
+		if(ed.getPo_num1().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.hachu_no >= ? ");	
+			param.add(ed.getPo_num1());
+		}
+		
+		//発注番号(po_num1)
+		if(ed.getPo_num2().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.hachu_no <= ? ");	
+			param.add(ed.getPo_num2());
+		}
+		
+		
+		//SQLにWhere句を追加
+		sql.append(where.toString());
+		
+		//実行
+		Map<String,Object> map = jt.queryForMap(sql.toString(),param.toArray());
+		int rec = Integer.parseInt(map.get("cnt").toString());
+		int pageCnt = rec / 25;
+		if(rec % 25 > 0) pageCnt++;
+		
+		return pageCnt;
+		
+	}
+	
+	
+	//--------------------------------------------
+	//		受注管理リスト表示用データ取得
+	//--------------------------------------------
+	public void getEdmngList(EdmngData ed) {
+		
+		StringBuilder sql = new StringBuilder();
+		StringBuilder where = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		//基本的なSQL
+		sql.append("select ");
+		sql.append("d01.kanri_no,");
+		sql.append("m02.tokuisaki_name,");
+		sql.append("d01.bukken_name,");
+		sql.append("d01.tanto,");
+		sql.append("d01.bumon,");
+		sql.append("d01.koji_kanryo_date,");
+		sql.append("d01.e_date,");
+		sql.append("d01.d_date,");
+		sql.append("d01.hachu_no ");
+		sql.append("from ");
+		sql.append("d01_eddb as d01 ");							// from DB1(d01_eddb) inner join DB2(m02_tokuisaki) on 結合条件(tokuisaki_no)
+		sql.append("inner join m02_tokuisaki as m02 "); 
+		sql.append("on d01.tokuisaki_no = m02.tokuisaki_no "); 
+		
+		
+		//検索条件
+		
+		//得意先
+		if(ed.getTokuisaki_name().length() > 0) {
+			where.append("where m02.tokuisaki_name like ? ");
+			param.add("%" + ed.getTokuisaki_name() + "%");
+		}
+		
+		//物件
+		if(ed.getProperty().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.bukken_name like ? ");
+			param.add("%" + ed.getProperty() + "%");
+		}
+		
+		//担当
+		if(ed.getTanto().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.tanto like ? ");
+			param.add("%" + ed.getTanto() + "%");
+		}
+		
+		//部門
+		if(ed.getDept().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.bumon like ? ");
+			param.add("%" + ed.getDept() + "%");
+		}
+		
+		//工事完了日(const_bgn)
+		if(ed.getConst_bgn().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.koji_kanryo_date >= ? ");	//フォームに入力されたdateは2023-06-08みたいな文字列として取得される で文字列ごとで手前からどちらの数字文字列(文字コード)が大きいかを見ていき判定している
+			param.add(ed.getConst_bgn());
+		}
+		
+		//工事完了日(const_end)
+		if(ed.getConst_end().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.koji_kanryo_date <= ? ");	
+			param.add(ed.getConst_end());
+		}
+		
+		//見積書作成日(est_bgn)
+		if(ed.getEst_bgn().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.e_date >= ? ");	
+			param.add(ed.getEst_bgn());
+		}
+		
+		//見積書作成日(est_end)
+		if(ed.getEst_end().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.e_date <= ? ");	
+			param.add(ed.getEst_end());
+		}
+
+		//納品書作成日(del_bgn)
+		if(ed.getDel_bgn().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.d_date >= ? ");	
+			param.add(ed.getDel_bgn());
+		}
+		
+		//納品書作成日(del_end)
+		if(ed.getDel_end().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.d_date <= ? ");	
+			param.add(ed.getDel_end());
+		}
+		
+		//発注番号(po_num1)
+		if(ed.getPo_num1().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.hachu_no >= ? ");	
+			param.add(ed.getPo_num1());
+		}
+		
+		//発注番号(po_num1)
+		if(ed.getPo_num2().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("d01.hachu_no <= ? ");	
+			param.add(ed.getPo_num2());
+		}
+		
+		//SQLにWhere句を追加
+		sql.append(where.toString());
+		
+		//offset割り出し
+		int offset = (ed.getPage() - 1) * 25;
+		
+		//Limitとoffsetを追加
+		sql.append("order by d01.kanri_no desc limit 25 offset ?");
+		
+		param.add(offset);
+		
+		//実行
+		ed.setList(jt.queryForList(sql.toString(),param.toArray()));
+
+	}
+	
+	
+	//--------------------------------------------
+	//		モーダル用ページ数取得(得意先)
+	//--------------------------------------------
+	public int getRefPageCount(EdmngData ed) {
+		
+		//SQL作成準備
+		StringBuilder sql = new StringBuilder();
+		StringBuilder where = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		
+		//基本的なSQL
+		sql.append("select count(*) cnt from m02_tokuisaki ");
+		
+		//得意先
+		if(ed.getTokuisaki_name().length() > 0) {
+			where.append("where tokuisaki_name like ? ");
+			param.add("%" + ed.getTokuisaki_name() + "%");
+		}
+		
+		//ﾌﾘｶﾞﾅ
+		if(ed.getHurigana().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("hurigana like ? ");
+			param.add("%" + ed.getHurigana() + "%");
+		}
+		
+		//select,from句を結合
+		sql.append(where.toString());
+		
+		Map<String,Object> map = jt.queryForMap(sql.toString(),param.toArray());
+		
+		int rec = Integer.parseInt(map.get("cnt").toString());
+		
+		System.out.println(rec);
+		
+		return (int)Math.ceil((double)rec / 25);
+	}
+	
+	
+	//---------------------------------------------------
+	//	得意先一覧リストデータ取得(モーダル用)
+	//---------------------------------------------------
+	public void getCustomerList4Modal(EdmngData ed) {
+		
+		StringBuilder sql = new StringBuilder();
+		StringBuilder where = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		try {
+		
+			//共通SQL
+			sql.append("select tokuisaki_no,tokuisaki_name,hurigana ");
+			sql.append("from m02_tokuisaki ");
+			
+			//検索条件
+			
+			//得意先
+			if(!ed.getTokuisaki_name().equals("")) {
+				where.append("where tokuisaki_name like ? ");
+				param.add("%" + ed.getTokuisaki_name() + "%");
+			}
+				
+			//フリガナ
+			if(!ed.getHurigana().equals("")) {
+				if(where.length() == 0) {
+					where.append("where hurigana like ? ");
+				}else {
+					where.append("and hurigana like ? ");
+				}
+				param.add("%" + ed.getHurigana() + "%");
+			}
+
+			
+			//共通SQLにwhere句を追加
+			sql.append(where.toString());
+			
+			//offset割り出し
+			int offset = (ed.getPage() - 1) * 25;
+			
+			//Limitとoffsetを追加
+			sql.append("order by tokuisaki_no asc limit 25 offset ?");
+			
+			param.add(offset);
+			
+			//実行
+			ed.setList(jt.queryForList(sql.toString(),param.toArray()));
+				
+		
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+		
+	}
+
+	
+	//--------------------------------------------
+	//		モーダル用ページ数取得(物件)
+	//--------------------------------------------
+	public int getBukkenPageCount(EdmngData ed) {
+		
+		//SQL作成準備
+		StringBuilder sql = new StringBuilder();
+		StringBuilder where = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		
+		//基本的なSQL
+		sql.append("select count(*) cnt from m03_bukken ");
+		
+		//物件名
+		if(ed.getProperty().length() > 0) {
+			where.append("where bukken_name like ? ");
+			param.add("%" + ed.getProperty() + "%");
+		}
+		
+		//ﾌﾘｶﾞﾅ
+		if(ed.getHurigana().length() > 0) {
+			if(where.length() == 0) {
+				where.append("where ");
+			}else {
+				where.append("and ");
+			}
+			where.append("hurigana like ? ");
+			param.add("%" + ed.getHurigana() + "%");
+		}
+		
+		//select,from句を結合
+		sql.append(where.toString());
+		
+		Map<String,Object> map = jt.queryForMap(sql.toString(),param.toArray());
+		
+		int rec = Integer.parseInt(map.get("cnt").toString());
+		
+		System.out.println(rec);
+		
+		return (int)Math.ceil((double)rec / 25);
+	}
+	
+	
+	//------------------------------------------------
+	//	物件一覧リストデータ取得(モーダル用)
+	//------------------------------------------------
+	public void getBukkenList(EdmngData ed) {
+		
+		StringBuilder sql = new StringBuilder();
+		StringBuilder where = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		try {
+		
+			//共通SQL
+			sql.append("select bukken_no,bukken_name,hurigana ");
+			sql.append("from m03_bukken ");
+			
+			//検索条件
+			
+			//物件
+			if(!ed.getProperty().equals("")) {
+				where.append("where bukken_name like ? ");
+				param.add("%" + ed.getProperty() + "%");
+			}
+				
+			//フリガナ
+			if(!ed.getHurigana().equals("")) {
+				if(where.length() == 0) {
+					where.append("where hurigana like ? ");
+				}else {
+					where.append("and hurigana like ? ");
+				}
+				param.add("%" + ed.getHurigana() + "%");
+			}
+
+			
+			//共通SQLにwhere句を追加
+			sql.append(where.toString());
+			
+			//offset割り出し
+			int offset = (ed.getPage() - 1) * 25;
+			
+			//Limitとoffsetを追加
+			sql.append("order by bukken_no asc limit 25 offset ?");
+			
+			param.add(offset);
+			
+			//実行
+			ed.setList(jt.queryForList(sql.toString(),param.toArray()));
+				
+		
+		} catch (Exception e) {
+			// TODO 自動生成された catch ブロック
+			e.printStackTrace();
+		}
+		
+	}
+	
+	
+	//------------------------------------------------
+	//			新規登録管理番号取得
+	//------------------------------------------------
+	public String getMaxKanri_no(EdmngData ed) {
+		
+		//現在の管理NoのMax値を取得
+		String sql = "select max(kanri_no) max_no from d01_eddb";
+		
+		int maxNo = jt.queryForObject(sql, Integer.class);
+		maxNo++;
+	
+		return Integer.toString(maxNo);
+		
+	}
+	
+	
+	//--------------------------------------------
+	//			受注管理新規登録
+	//--------------------------------------------
+	public void edmngInsert(EdmngData ed) {
+		
+		//SQL実行用のクラス準備
+		StringBuilder sql = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		//新しい管理noの生成
+		//１、現在のMax値を取得
+		sql.append("select max(kanri_no) kanri_no from d01_eddb ");
+		Map<String,Object> map = jt.queryForMap(sql.toString());
+		int kanri_no = Integer.parseInt(map.get("kanri_no").toString());
+		
+		//インクリメントして新しい管理Noとする
+		kanri_no++;
+		
+		//Insert処理
+		sql.setLength(0);
+		sql.append("insert into d01_eddb values(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+		param.add(kanri_no);
+		param.add(Integer.parseInt(ed.getBukken_no()));
+		param.add(ed.getProperty());
+		param.add(Integer.parseInt(ed.getTokuisaki_no()));
+		param.add(ed.getTanto());
+		param.add(ed.getDept());
+		param.add(ed.getKoji_kanryo_date());
+		param.add(ed.getMemo());
+		param.add(0);	//見積作成フラグ、新規作成時に作られていることはありえないので０
+		param.add(0);	//納品書作成フラグ　同上
+		param.add(ed.getSeikyu_flg());
+		param.add(ed.getE_date());
+		param.add(ed.getD_date());
+		param.add(0);	//見積書合計金額、見積書がないのにあるわけない
+		param.add(0);	//納品書合計金額　同上
+		param.add(0);	//見積書消費税額　同上
+		param.add(0);	//納品書消費税額　同上
+		param.add(0);	//見積書税込金額
+		param.add(0);	//納品書税込金額
+		param.add(ed.getE_tekiyo());
+		param.add(ed.getD_tekiyo());
+		param.add(ed.getHachu_no());
+		param.add(ed.getNendo());
+		
+		//実行
+		jt.update(sql.toString(),param.toArray());
+		
+	}
+	
+	
+	
+	//--------------------------------------------
+	//			受注管理データ取得用
+	//--------------------------------------------
+	public void getEdmngData(EdmngData ed) {
+		//SQL実行
+		StringBuilder sql = new StringBuilder();
+		sql.append("select ");		//以下どのカラムから？
+		sql.append("d01.*,");
+		sql.append("m02.tokuisaki_name ");
+		sql.append("from ");		//以下どのテーブルから？
+		sql.append("d01_eddb as d01 ");
+		sql.append("inner join m02_tokuisaki as m02 ");				//必要な情報が二つのテーブルにわかれている
+		sql.append("on d01.tokuisaki_no = m02.tokuisaki_no ");	
+		sql.append("where ");
+		sql.append("kanri_no=");
+		sql.append(ed.getKanri_no());
+		
+		Map<String,Object> map = jt.queryForMap(sql.toString());
+		
+		//取得結果をフィードに埋め込む
+		ed.setBukken_no(map.get("bukken_no").toString());
+		ed.setProperty(map.get("bukken_name").toString());
+		ed.setTokuisaki_no(map.get("tokuisaki_no").toString());
+		ed.setTokuisaki_name(map.get("tokuisaki_name").toString());
+		ed.setTanto((String)map.get("tanto"));
+		ed.setDept((String)map.get("bumon"));
+		ed.setKoji_kanryo_date((String)map.get("koji_kanryo_date"));
+		ed.setMemo((String)map.get("memo"));
+		ed.setE_flg(Integer.parseInt(map.get("e_flg").toString()));
+		ed.setD_flg(Integer.parseInt(map.get("d_flg").toString()));
+		ed.setSeikyu_flg(Integer.parseInt(map.get("seikyu_flg").toString()));
+		ed.setE_date(map.get("e_date").toString());
+		ed.setD_date(map.get("d_date").toString());
+		ed.setE_gokei(Integer.parseInt(map.get("e_gokei").toString()));
+		ed.setD_gokei(Integer.parseInt(map.get("d_gokei").toString()));
+		ed.setE_tax(Integer.parseInt(map.get("e_tax").toString()));
+		ed.setD_tax(Integer.parseInt(map.get("d_tax").toString()));
+		ed.setE_total(Integer.parseInt(map.get("e_total").toString()));
+		ed.setD_total(Integer.parseInt(map.get("d_total").toString()));
+		ed.setE_tekiyo((String)map.get("e_tekiyo"));
+		ed.setD_tekiyo((String)map.get("d_tekiyo"));
+		ed.setHachu_no((String)map.get("hachu_no"));
+		ed.setNendo(map.get("nendo").toString());
+		
+		//System.out.println("受注管理データ取得 管理番号：" + ed.getKanri_no());
+	}
+	
+	
+	//--------------------------------------------
+	//			受注管理編集登録
+	//--------------------------------------------
+	public void edmngUpdate(EdmngData ed) {
+		
+		//SQL実行用のクラス準備
+		StringBuilder sql = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		//Update処理
+		sql.append("update d01_eddb set ");
+		
+		sql.append("tokuisaki_no = ?,");
+		param.add(Integer.parseInt(ed.getTokuisaki_no().toString()));
+		
+		sql.append("bukken_no = ?,");
+		param.add(Integer.parseInt(ed.getBukken_no().toString()));
+		
+		sql.append("bukken_name = ?,");
+		param.add(ed.getProperty().toString());
+		
+		sql.append("tanto = ?,");
+		param.add((String)ed.getTanto());
+		
+		sql.append("bumon = ?,");
+		param.add((String)ed.getDept());
+		
+		sql.append("koji_kanryo_date = ?,");
+		param.add(ed.getKoji_kanryo_date().toString());
+		
+		sql.append("memo = ?,");
+		param.add((String)ed.getMemo());
+		
+		sql.append("seikyu_flg = ?,");
+		param.add(ed.getSeikyu_flg());
+		
+		sql.append("e_date = ?,");
+		param.add((String)ed.getE_date());
+		
+		sql.append("d_date = ?,");
+		param.add((String)ed.getD_date());
+		
+		sql.append("e_tekiyo = ?,");
+		param.add((String)ed.getE_tekiyo());
+		
+		sql.append("d_tekiyo = ?");
+		param.add((String)ed.getD_tekiyo());
+		
+		if(ed.getHachu_no().length() > 0) {
+			sql.append(",hachu_no = ?");
+			param.add((String)ed.getHachu_no());
+		}
+
+		sql.append(" where kanri_no = ?");
+		param.add(Integer.parseInt(ed.getKanri_no().toString()));
+		
+		System.out.println(ed.toString());
+		System.out.println(sql.toString());
+		
+		//実行
+		jt.update(sql.toString(),param.toArray());
+		
+	}
+	
+
+}

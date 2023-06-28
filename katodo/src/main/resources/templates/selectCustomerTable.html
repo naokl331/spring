@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<table class="table table-borderd table-striped table-dark border-light table-sm">
+		<tr>
+			<th>#</th>
+			<th>得意先名</th>
+			<th>フリガナ</th>
+			<th>選択</th>
+		</tr>
+		
+			<tr th:each="map:${ed.list}">
+				
+				<td th:text="${map.tokuisaki_no}"></td>
+				<td th:text="${map.tokuisaki_name}"></td>
+				<td th:text="${map.hurigana}"></td>
+				<td>
+					<button type="button" class="btn btn-primary" th:onclick="|choiceCustomer('__${map.tokuisaki_no}__','__${map.tokuisaki_name}__')|">選択</button>
+					<!-- <button type="button" class="btn btn-primary" th:attr="onclick='customerSelect(\'' + ${map.tokuisaki_no} + '\')'">選択</button> -->
+				</td>
+				
+			</tr>	
+	</table>
+</body>
+</html>

@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+<meta charset="UTF-8">
+<title>Insert title here</title>
+</head>
+<body>
+	<table class="table table-sm table-bordered table-striped table-dark border-secondary">
+		<tr th:each="map:${Koji3list}">
+			<td th:text="${map.koji_name}"></td>
+			<td><a href="#" th:onclick="|choiceKoji3('__${map.koji_name}__')|" style="color: white;">選択</td>
+		</tr>
+	</table>
+</body>
+</html>

@@ -1,0 +1,319 @@
+package com.example.katodo.repositry;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.example.katodo.data.EDdetailsData;
+
+import jakarta.servlet.http.HttpSession;
+
+@Repository
+public class EDdetailsRepository {
+
+	
+	@Autowired
+	JdbcTemplate jt;
+	
+	@Autowired
+	HttpSession session;
+	
+	
+	
+	//==========================================
+	//		管理Noに基づくデータ取得
+	//==========================================
+	public void getEdBaseData(EDdetailsData edd) {
+		
+		StringBuilder sql = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		sql.append("select ");
+		sql.append("m02.tokuisaki_name,");
+		sql.append("d01.bukken_name,");
+		sql.append("d01.e_date,");
+		sql.append("d01.e_tekiyo ");
+		sql.append("from ");
+		sql.append("d01_eddb d01 ");
+		sql.append("inner join m02_tokuisaki m02 ");
+		sql.append("on d01.tokuisaki_no = m02.tokuisaki_no ");
+		sql.append("where d01.kanri_no = ");
+		sql.append(edd.getKanri_no());
+		
+		Map<String,Object> map = jt.queryForMap(sql.toString());
+		
+		edd.setTokuisaki_name(map.get("tokuisaki_name").toString());
+		edd.setBukken_name(map.get("bukken_name").toString());
+		edd.setE_date(map.get("e_date").toString());
+		edd.setE_tekiyo(map.get("e_tekiyo").toString());
+		
+		
+		//一時テーブルの用意
+		if(edd.isTmpTable_flg()) {
+		
+			sql = new StringBuilder();
+			sql.append("delete from t02_edetails");
+			jt.execute(sql.toString());
+			
+			sql = new StringBuilder();
+			sql.append("insert into t02_edetails ");
+			sql.append("values(?,1,'','','',0,'',0,0,1,'',?)");
+			param.add(edd.getKanri_no());				//kanri_no
+			param.add(session.getAttribute("year"));	//nendo
+			jt.update(sql.toString(),param.toArray());
+			
+		}
+		
+		//リスト作成
+		edd.setList(jt.queryForList("select * from t02_edetails"));
+	}
+	
+	
+	//==========================================
+	//			工事１リスト取得用
+	//==========================================
+	public List<Map<String,Object>> getKoji1List() {
+	
+		String sql = "select koji_name from m04_koji1 order by koji_no";
+		
+		return jt.queryForList(sql);
+	}
+	
+	
+	//==========================================
+	//			工事２リスト取得用
+	//==========================================
+	public List<Map<String,Object>> getKoji2List() {
+	
+		String sql = "select koji_name from m04_koji2 order by koji_no";
+		
+		return jt.queryForList(sql);
+	}
+	
+	
+	//==========================================
+	//			工事３リスト取得用
+	//==========================================
+	public List<Map<String,Object>> getKoji3List() {
+	
+		String sql = "select koji_name from m04_koji3 order by koji_no";
+		
+		return jt.queryForList(sql);
+	}
+	
+	
+	//==========================================
+	//			単位リスト取得用
+	//==========================================
+	public List<Map<String,Object>> getTaniList() {
+	
+		String sql = "select tani_name from m05_tani order by tani_no";
+		
+		return jt.queryForList(sql);
+	}
+	
+	
+	//==========================================
+	//			一時テーブル更新
+	//==========================================
+	public void updRec(EDdetailsData edd) {
+		
+		StringBuilder sql = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		sql.append("update t02_edetails set ");
+		
+		sql.append("koji1 = ?,");
+		param.add(edd.getKoji1());
+		
+		sql.append("koji2 = ?,");
+		param.add(edd.getKoji2());
+		
+		sql.append("koji3 = ?,");
+		param.add(edd.getKoji3());
+		
+		sql.append("suryo = ?,");
+		param.add(edd.getSuryo());
+		
+		sql.append("tani = ?,");
+		param.add(edd.getTani());
+		
+		sql.append("tanka = ?,");
+		param.add(edd.getTanka());
+		
+		sql.append("kingaku = ?,");
+		param.add(edd.getKingaku());
+		
+		sql.append("tax_flg = ?,");
+		param.add(edd.getTax_flg());
+		
+		sql.append("biko = ? ");
+		param.add(edd.getBiko());
+		
+		sql.append("where kanri_no = ? ");
+		param.add(edd.getKanri_no());
+		
+		sql.append("and rec_no = ?");
+		param.add(edd.getRec_no());
+		
+		jt.update(sql.toString(),param.toArray());
+		
+	}
+	
+	
+	//==========================================
+	//			一時テーブル登録
+	//==========================================
+	public void addRec(EDdetailsData edd) {
+		
+		StringBuilder sql = new StringBuilder();
+		List<Object> param = new ArrayList<Object>();
+		
+		//rec_noの最大値を取得
+		sql.append("select max(rec_no) rec_no from t02_edetails");
+		Map<String,Object> map = jt.queryForMap(sql.toString());
+		int rec_no = Integer.parseInt(map.get("rec_no").toString());
+		rec_no++;
+
+		//Insert
+		sql = new StringBuilder();
+		sql.append("insert into t02_edetails ");
+		sql.append("values(?,?,'','','',0,'',0,0,1,'',?)");
+		param.add(edd.getKanri_no());
+		param.add(rec_no);
+		param.add(session.getAttribute("year").toString());
+		
+		jt.update(sql.toString(),param.toArray());
+
+	}
+	
+	
+	//==========================================
+	//				見積書登録
+	//==========================================
+	@Transactional
+	public void eRegist(EDdetailsData edd) {
+		
+		//d02の該当レコードを削除
+		StringBuilder sql = new StringBuilder();
+		sql.append("BEGIN;");
+		sql.append("delete from d02_edetails where kanri_no = ");
+		sql.append(edd.getKanri_no());
+		jt.update(sql.toString());
+		
+		//t02をd02に転記
+		sql = new StringBuilder();
+		sql.append("insert into d02_edetails select * from t02_edetails");
+		jt.update(sql.toString());
+		
+		//d01の該当箇所を変更 (見積書作成フラグ/合計/消費税/税込 額)
+		
+		sql = new StringBuilder();
+		
+		//見積書合計金額を算出して更新
+		Map<String,Object> map = jt.queryForMap("select sum(kingaku) kingaku from t02_edetails");
+		int kingaku = Integer.parseInt(map.get("kingaku").toString());
+		
+		
+		//見積書消費税額を算出して更新
+		map = jt.queryForMap("select sum(kingaku) kingaku from t02_edetails where tax_flg = 0");
+		Map<String,Object> map2 = jt.queryForMap("select tax from saiban");
+		float tax = (float)Float.parseFloat(map2.get("tax").toString());
+
+		
+		int csp_tax;
+
+		if (map != null && map.get("kingaku") != null) {
+		    csp_tax = (int) (Integer.parseInt(map.get("kingaku").toString()) * tax);
+		} else {
+		    csp_tax = 0;
+		}
+		
+		
+		//税込金額を算出して更新
+		int total = kingaku + csp_tax;
+		
+		//テーブルのupdate
+		sql = new StringBuilder();
+		sql.append("update d01_eddb set ");
+		sql.append("e_flg = 1,");				//見積書作成フラグ -> １
+		sql.append("e_gokei = ");				//見積書合計金額
+		sql.append(kingaku + ",");
+		sql.append("e_tax = ");					//見積書消費税額
+		sql.append(csp_tax + ",");
+		sql.append("e_total = ");				//見積書税込金額
+		sql.append(total + " ");
+		sql.append("where kanri_no = ");
+		sql.append(edd.getKanri_no() + ";");
+		sql.append("COMMIT;");
+		
+		jt.update(sql.toString());
+		
+	}
+	
+	
+	//==========================================
+	//		編集->編集  納品書編集
+	//==========================================
+	public void copy2t02(EDdetailsData edd) {
+		
+		//t02の該当レコードを削除
+		StringBuilder sql = new StringBuilder();
+		
+		sql.append("delete from t02_edetails");
+		jt.update(sql.toString());
+		
+		//d02をt02に転記
+		sql = new StringBuilder();
+		sql.append("insert into t02_edetails select * from d02_edetails");
+		jt.update(sql.toString());
+	}
+	
+	
+	//==========================================
+	//			一時テーブル取得
+	//==========================================
+	public void getRecord(EDdetailsData edd) {
+		
+		String sql ="select * from t02_edetails where kanri_no = ? and rec_no = ?";
+		Map<String,Object> map = jt.queryForMap(sql,edd.getKanri_no(),edd.getRec_no());
+		
+		edd.setKoji1(map.get("koji1").toString());
+		edd.setKoji2(map.get("koji2").toString());
+		edd.setKoji3(map.get("koji3").toString());
+		edd.setSuryo(Float.parseFloat(map.get("suryo").toString()));
+		edd.setTani(map.get("tani").toString());
+		edd.setTanka(Float.parseFloat(map.get("tanka").toString()));
+		edd.setKingaku(Integer.parseInt(map.get("kingaku").toString()));
+		edd.setTax_flg(Integer.parseInt(map.get("tax_flg").toString()));
+		edd.setBiko(map.get("biko").toString());
+		edd.setNendo(map.get("nendo").toString());
+	}
+	
+	
+	//==================================================================
+	// 一時テーブル取得(見積書編集時 d02_edetailsから一時テーブル取得)
+	//==================================================================
+	public void getRecordFromD02(EDdetailsData edd) {
+		
+		String sql ="select * from d02_edetails where kanri_no = ?";
+		edd.setList(jt.queryForList(sql,edd.getKanri_no()));
+
+	}
+	
+	//==========================================
+	//			一時テーブル１列削除
+	//==========================================
+	public void deleteRecord(EDdetailsData edd) {
+		
+		String sql ="delete from t02_edetails where kanri_no = ? and rec_no = ?";
+		jt.update(sql,edd.getKanri_no(),edd.getRec_no());
+		
+	}
+	
+}
